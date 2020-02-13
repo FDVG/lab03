@@ -1,3 +1,8 @@
+//clang-format -style=Mozilla
+//code style changes
+//now you are ready for
+//CODE REVIEW!!!
+
 //some comments made during pull request
 //NYEH NEH NYEH NYEH
 //ERRRRR EER MRRR
