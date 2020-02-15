@@ -1,19 +1,23 @@
 ## Laboratory work III
+## How to start hate CMAKE and then realise you are blind
+***
+Daily geometry
+
 
 Данная лабораторная работа посвещена изучению систем автоматизации сборки проекта на примере **CMake**
 
-```ShellSession
-$ open https://cmake.org/
-```
+Но на самом деле она посвящена тому как быть внимательнее...
+***
 
 ## Tasks
 
 - [x] 1. Создать публичный репозиторий с названием **lab03** на сервисе **GitHub**
 - [x] 2. Ознакомиться со ссылками учебного материала
-- [ ] 3. Выполнить инструкцию учебного материала
+- [x] 3. Выполнить инструкцию учебного материала
 - [ ] 4. Составить отчет и отправить ссылку личным сообщением в **Slack**
 
 ## Tutorial
+***
 
 ```ShellSession
 $ export GITHUB_USERNAME=<имя_пользователя> #устанавливаем переменную окружения
@@ -158,47 +162,85 @@ $ gistup -m "lab${LAB_NUMBER}"
 ```
 
 ## Homework
+А теперь то, что съело большую часть моих нейронов.
+Я просмотрел наличие готовых скриптов для задания 3.
+И подумал, что нужно скомпилировать программу только из файлов библиотек...
 
-Представьте, что вы стажер в компании "Formatter Inc.".
 ### Задание 1
-1. Копируем директорию [formatter_lib](formatter_lib)
-2. Пишем в CMakeList.txt:
+***
+  Запрашиваемые библиотеки по сути просто архивы, а значит:
    ```
-   #достаточно
+   # достаточно
    ADD_LIBRARY(formatter STATIC formatter.cpp formatter.h)
-   #хотя правильнее прописывать и другие параметры
+   # хотя правильнее прописывать и другие параметры
+   cmake_minimum_required(VERSION 2.4)
+   project(formatter)
+   include_directories(${PROJECT_SOURCE_DIR})
+   add_library(formatterlib formatter.cpp)
+   # добавление хедеров опционально, хотя в некоторых конфигурациях
+   # их все же стоит добавлять через include CMake'а
    ```
-В этой директории находятся файлы для статической библиотеки *formatter*.
-Создайте `CMakeList.txt` в директории [formatter_lib](formatter_lib),
-с помощью которого можно будет собирать статическую библиотеку *formatter*.
-
 ### Задание 2
+***
     ```
     #аналогично
     ADD_LIBRARY(formatter STATIC libformatter.a formatter_ex.cpp formatter_ex.h)
     #но нужно чтобы все файлы были в одной директории, чтобы не линковать их
+    #или
+    add_library(formatter_ex formatter_ex.cpp ../formatter_lib/formatter.cpp)
     ```
-У компании "Formatter Inc." есть перспективная библиотека,
-которая является расширением предыдущей библиотеки. Т.к. вы уже овладели
-навыком созданием `CMakeList.txt` для статической библиотеки *formatter*, ваш 
-руководитель поручает заняться созданием `CMakeList.txt` для библиотеки 
-*formatter_ex*, которая в свою очередь использует библиотеку *formatter*.
-
 ### Задание 3
-Конечно же ваша компания предоставляет примеры использования своих библиотек.
-Чтобы продемонстрировать как работать с библиотекой *formatter_ex*,
-вам необходимо создать два `CMakeList.txt` для двух простых приложений:
-* *hello_world*, которое использует библиотеку *formatter_ex*;
-* *solver*, приложение которое испольует статические библиотеки *formatter_ex* и *solver_lib*.
+***
+  Тут я столкнулся (помимо указанного выше) с другой трудностью.
+  В убунту существует проблема с принадлежностью некоторых методов к std.
+  Поэтому при обращении к solver.cpp появлялась ошибка в отношении
+  "std::sqrtf(d)". Проблема решается включением cmath в solver.h.
+  И исправлением на "sqrtf(d)".
+  
+  Теперь представим структуру файлов:
+  ```
+  |root
+      |build
+      |formatter_ex_lib
+          |formatter_ex.cpp
+          |formatter_ex.h
+      |formatter_lib
+          |formatter.cpp
+          |formatter.h
+      |solver_lib
+          |solver.h
+          |solver.cpp
+      |CMakeLists.txt
+      |equation.cpp
+  ```
+  Тогда для hello world:
+  ```
+  cmake_minimum_required(VERSION 2.4)
+  set(CMAKE_CXX_STANDART 11)
+  set(CMAKE_CXX_STANDART_REQUIRED ON)
+  project(hello_world)
+  
+  include_directories(${PROJECT_SOURCE_DIR})
+  include_directories(${PROJECT_SOURCE_DIR}/formatter_ex_lib)
+  include_directories(${PROJECT_SOURCE_DIR}/formatter_lib)
+  
+  add_library(hwlib STATIC formatter_ex_lib/formatter_ex.cpp formatter_ex_lib/formatter_ex.h formatter_lib/formatter.cpp formatter_lib/formatter.h)
+  add_executable(app hw.cpp)
+  target_link_libraries(app hwlib)
+  ```
+  Для solver:
+  ```
+  #сначала то же самое, до
+  include_directories(${PROJECT_SOURCE_DIR}/solver_lib)
+  
+  add_library(solib STATIC formatter_ex_lib/formatter_ex.cpp formatter_ex_lib/formatter_ex.h formatter_lib/formatter.cpp formatter_lib/formatter.h solver_lib/solver.cpp solver_lib/solver.h)
+  add_executable(app solib.cpp)
+  target_link_libraries(app solib)
+  ```
 
-**Удачной стажировки!**
-
-## Links
-- [Основы сборки проектов на С/C++ при помощи CMake](https://eax.me/cmake/)
-- [CMake Tutorial](http://neerc.ifmo.ru/wiki/index.php?title=CMake_Tutorial)
-- [C++ Tutorial - make & CMake](https://www.bogotobogo.com/cplusplus/make.php)
-- [Autotools](http://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html)
-- [CMake](https://cgold.readthedocs.io/en/latest/index.html)
+## New Links
+- [Весьма годная "методичка" по CMake](https://riptutorial.com/Download/cmake-ru.pdf)
+- [Ответы на все вопросы](https://stackoverflow.com/)
 
 ```
 Copyright (c) 2015-2019 The ISC Authors
